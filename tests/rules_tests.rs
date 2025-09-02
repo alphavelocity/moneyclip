@@ -1,4 +1,4 @@
-// Copyright (c) AlphaVelocity.
+// Copyright (c) 2025 Soumyadip Sarkar.
 // All rights reserved.
 //
 // This source code is licensed under the license found in the
