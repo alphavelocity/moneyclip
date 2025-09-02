@@ -5,7 +5,7 @@ edition = "2021"
 authors = ["Soumyadip Sarkar <soumyadip@soumyadipsarkar.com>"]
 description = "Moneyclip: multi-currency personal finance, envelope budgeting, and portfolio CLI"
 license = "Apache-2.0"
-repository = "https://github.com/alphavelocity/moneyclip"
+repository = "https://github.com/neuralsorcerer/moneyclip"
 keywords = ["finance", "budget", "envelope", "portfolio", "cli", "fx", "multicurrency"]
 
 [profile.release]
