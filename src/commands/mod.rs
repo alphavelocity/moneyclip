@@ -5,14 +5,14 @@
 // LICENSE file in the root directory of this source tree.
 
 pub mod accounts;
-pub mod categories;
-pub mod transactions;
 pub mod budgets;
-pub mod reports;
-pub mod portfolio;
-pub mod importer;
+pub mod categories;
+pub mod doctor;
+pub mod envelopes;
 pub mod exporter;
 pub mod fx;
-pub mod envelopes;
-pub mod doctor;
+pub mod importer;
+pub mod portfolio;
+pub mod reports;
 pub mod rules;
+pub mod transactions;

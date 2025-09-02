@@ -4,13 +4,13 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
+use crate::utils::{
+    apply_import_rules, id_for_account, id_for_category, maybe_print_json, parse_date,
+    parse_decimal, pretty_table,
+};
 use anyhow::Result;
 use rusqlite::{params, Connection};
 use serde::Serialize;
-use crate::utils::{
-    apply_import_rules, id_for_account, id_for_category, maybe_print_json, parse_date, parse_decimal,
-    pretty_table,
-};
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {
@@ -30,21 +30,44 @@ fn add(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
     let note = sub.get_one::<String>("note").map(|s| s.to_string());
 
     let account_id = id_for_account(conn, account_name)?;
-    let currency: String = conn.query_row("SELECT currency FROM accounts WHERE id=?1", params![account_id], |r| r.get(0))?;
-    let mut category_id = if let Some(cat) = category { Some(id_for_category(conn, &cat)?) } else { None };
+    let currency: String = conn.query_row(
+        "SELECT currency FROM accounts WHERE id=?1",
+        params![account_id],
+        |r| r.get(0),
+    )?;
+    let mut category_id = if let Some(cat) = category {
+        Some(id_for_category(conn, &cat)?)
+    } else {
+        None
+    };
 
     if category_id.is_none() {
         let (rule_cat, rewrite) = apply_import_rules(conn, payee, None)?;
-        if category_id.is_none() { category_id = rule_cat; }
-        if let Some(newp) = rewrite { println!("Payee rewritten: {} -> {}", payee, newp); }
+        if category_id.is_none() {
+            category_id = rule_cat;
+        }
+        if let Some(newp) = rewrite {
+            println!("Payee rewritten: {} -> {}", payee, newp);
+        }
     }
 
     conn.execute(
         "INSERT INTO transactions(date, account_id, amount, payee, category_id, currency, note)
          VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-        params![date.to_string(), account_id, amount.to_string(), payee, category_id, currency, note],
+        params![
+            date.to_string(),
+            account_id,
+            amount.to_string(),
+            payee,
+            category_id,
+            currency,
+            note
+        ],
     )?;
-    println!("Recorded {} on {} at '{}' (acct: {})", amount, date, payee, account_name);
+    println!(
+        "Recorded {} on {} at '{}' (acct: {})",
+        amount, date, payee, account_name
+    );
     Ok(())
 }
 
@@ -117,8 +140,10 @@ pub fn query_rows(conn: &Connection, sub: &clap::ArgMatches) -> Result<Vec<Trans
     let mut rows = if params_vec.is_empty() {
         stmt.query([])?
     } else {
-        let params: Vec<&dyn rusqlite::ToSql> =
-            params_vec.iter().map(|s| s as &dyn rusqlite::ToSql).collect();
+        let params: Vec<&dyn rusqlite::ToSql> = params_vec
+            .iter()
+            .map(|s| s as &dyn rusqlite::ToSql)
+            .collect();
         stmt.query(rusqlite::params_from_iter(params))?
     };
 

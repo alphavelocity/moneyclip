@@ -11,7 +11,7 @@ use serde_json::json;
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {
         Some(("transactions", sub)) => export_transactions(conn, sub),
-        _ => Ok(())
+        _ => Ok(()),
     }
 }
 
@@ -25,37 +25,51 @@ fn export_transactions(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> 
          LEFT JOIN accounts a ON t.account_id=a.id
          LEFT JOIN categories c ON t.category_id=c.id
          ORDER BY t.date, t.id")?;
-    let rows = stmt.query_map([], |r| Ok((
-        r.get::<_, String>(0)?,
-        r.get::<_, String>(1)?,
-        r.get::<_, String>(2)?,
-        r.get::<_, String>(3)?,
-        r.get::<_, String>(4)?,
-        r.get::<_, Option<String>>(5)?,
-        r.get::<_, Option<String>>(6)?,
-    )))?;
+    let rows = stmt.query_map([], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            r.get::<_, String>(1)?,
+            r.get::<_, String>(2)?,
+            r.get::<_, String>(3)?,
+            r.get::<_, String>(4)?,
+            r.get::<_, Option<String>>(5)?,
+            r.get::<_, Option<String>>(6)?,
+        ))
+    })?;
 
     match fmt.as_str() {
         "csv" => {
             let mut wtr = csv::Writer::from_path(out)?;
-            wtr.write_record(["date","account","payee","amount","currency","category","note"])?;
+            wtr.write_record([
+                "date", "account", "payee", "amount", "currency", "category", "note",
+            ])?;
             for row in rows {
-                let (d,a,p,amt,ccy,cat,note) = row?;
-                wtr.write_record([d,a,p,amt,ccy,cat.unwrap_or_default(),note.unwrap_or_default()])?;
+                let (d, a, p, amt, ccy, cat, note) = row?;
+                wtr.write_record([
+                    d,
+                    a,
+                    p,
+                    amt,
+                    ccy,
+                    cat.unwrap_or_default(),
+                    note.unwrap_or_default(),
+                ])?;
             }
             wtr.flush()?;
         }
         "json" => {
             let mut items = Vec::new();
             for row in rows {
-                let (d,a,p,amt,ccy,cat,note) = row?;
+                let (d, a, p, amt, ccy, cat, note) = row?;
                 items.push(json!({
                     "date": d, "account": a, "payee": p, "amount": amt, "currency": ccy, "category": cat, "note": note
                 }));
             }
             std::fs::write(out, serde_json::to_string_pretty(&items)?)?;
         }
-        _ => { eprintln!("Unknown format: {} (use csv|json)", fmt); }
+        _ => {
+            eprintln!("Unknown format: {} (use csv|json)", fmt);
+        }
     }
     println!("Exported transactions to {}", out);
     Ok(())

@@ -17,134 +17,325 @@ pub fn build_cli() -> Command {
             Command::new("account")
                 .about("Manage accounts")
                 .subcommand_required(true)
-                .subcommand(Command::new("add").about("Add a new account")
-                    .arg(arg!(--name <NAME>).required(true))
-                    .arg(arg!(--type <TYPE> "bank|card|cash|broker").required(true))
-                    .arg(arg!(--currency <CCY> "ISO code like INR, USD").required(true)))
+                .subcommand(
+                    Command::new("add")
+                        .about("Add a new account")
+                        .arg(arg!(--name <NAME>).required(true))
+                        .arg(arg!(--type <TYPE> "bank|card|cash|broker").required(true))
+                        .arg(arg!(--currency <CCY> "ISO code like INR, USD").required(true)),
+                )
                 .subcommand(Command::new("list").about("List accounts"))
-                .subcommand(Command::new("rm").about("Remove account").arg(arg!(--name <NAME>).required(true)))
+                .subcommand(
+                    Command::new("rm")
+                        .about("Remove account")
+                        .arg(arg!(--name <NAME>).required(true)),
+                ),
         )
         .subcommand(
             Command::new("category")
                 .about("Manage categories")
                 .subcommand_required(true)
-                .subcommand(Command::new("add").about("Add").arg(arg!(--name <NAME>).required(true)))
+                .subcommand(
+                    Command::new("add")
+                        .about("Add")
+                        .arg(arg!(--name <NAME>).required(true)),
+                )
                 .subcommand(Command::new("list").about("List"))
-                .subcommand(Command::new("rm").about("Remove").arg(arg!(--name <NAME>).required(true)))
+                .subcommand(
+                    Command::new("rm")
+                        .about("Remove")
+                        .arg(arg!(--name <NAME>).required(true)),
+                ),
         )
         .subcommand(
             Command::new("tx")
                 .about("Record and list transactions")
                 .subcommand_required(true)
-                .subcommand(Command::new("add").about("Add transaction. Amount: positive=income, negative=expense")
-                    .arg(arg!(--date <DATE> "YYYY-MM-DD").required(true))
-                    .arg(arg!(--account <NAME>).required(true))
-                    .arg(arg!(--amount <AMOUNT>).required(true))
-                    .arg(arg!(--payee <PAYEE>).required(true))
-                    .arg(arg!(--category <CAT>).required(false))
-                    .arg(arg!(--note <NOTE>).required(false)))
-                .subcommand(Command::new("list").about("List transactions")
-                    .arg(arg!(--limit <N>).value_parser(value_parser!(usize)).required(false))
-                    .arg(arg!(--month <YYYY_MM>).required(false))
-                    .arg(arg!(--account <NAME>).required(false))
-                    .arg(arg!(--category <CAT>).required(false))
-                    .arg(arg!(--json).action(ArgAction::SetTrue).conflicts_with("jsonl"))
-                    .arg(arg!(--jsonl).action(ArgAction::SetTrue).conflicts_with("json")))
+                .subcommand(
+                    Command::new("add")
+                        .about("Add transaction. Amount: positive=income, negative=expense")
+                        .arg(arg!(--date <DATE> "YYYY-MM-DD").required(true))
+                        .arg(arg!(--account <NAME>).required(true))
+                        .arg(arg!(--amount <AMOUNT>).required(true))
+                        .arg(arg!(--payee <PAYEE>).required(true))
+                        .arg(arg!(--category <CAT>).required(false))
+                        .arg(arg!(--note <NOTE>).required(false)),
+                )
+                .subcommand(
+                    Command::new("list")
+                        .about("List transactions")
+                        .arg(
+                            arg!(--limit <N>)
+                                .value_parser(value_parser!(usize))
+                                .required(false),
+                        )
+                        .arg(arg!(--month <YYYY_MM>).required(false))
+                        .arg(arg!(--account <NAME>).required(false))
+                        .arg(arg!(--category <CAT>).required(false))
+                        .arg(
+                            arg!(--json)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("jsonl"),
+                        )
+                        .arg(
+                            arg!(--jsonl)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("json"),
+                        ),
+                ),
         )
         .subcommand(
             Command::new("budget")
                 .about("Planned monthly budgets per category (in base currency)")
                 .subcommand_required(true)
-                .subcommand(Command::new("set").about("Set budget (overwrite)")
-                    .arg(arg!(--month <YYYY_MM>).required(true))
-                    .arg(arg!(--category <CAT>).required(true))
-                    .arg(arg!(--amount <AMOUNT>).required(true)))
-                .subcommand(Command::new("list").about("List budgets").arg(arg!(--month <YYYY_MM>).required(false)))
-                .subcommand(Command::new("report").about("Budget vs actuals")
-                    .arg(arg!(--month <YYYY_MM>).required(true))
-                    .arg(arg!(--base).action(ArgAction::SetTrue))
-                    .arg(arg!(--currency <CCY> "Override output currency").required(false))
-                    .arg(arg!(--json).action(ArgAction::SetTrue).conflicts_with("jsonl"))
-                    .arg(arg!(--jsonl).action(ArgAction::SetTrue).conflicts_with("json")))
+                .subcommand(
+                    Command::new("set")
+                        .about("Set budget (overwrite)")
+                        .arg(arg!(--month <YYYY_MM>).required(true))
+                        .arg(arg!(--category <CAT>).required(true))
+                        .arg(arg!(--amount <AMOUNT>).required(true)),
+                )
+                .subcommand(
+                    Command::new("list")
+                        .about("List budgets")
+                        .arg(arg!(--month <YYYY_MM>).required(false)),
+                )
+                .subcommand(
+                    Command::new("report")
+                        .about("Budget vs actuals")
+                        .arg(arg!(--month <YYYY_MM>).required(true))
+                        .arg(arg!(--base).action(ArgAction::SetTrue))
+                        .arg(arg!(--currency <CCY> "Override output currency").required(false))
+                        .arg(
+                            arg!(--json)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("jsonl"),
+                        )
+                        .arg(
+                            arg!(--jsonl)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("json"),
+                        ),
+                ),
         )
         .subcommand(
             Command::new("report")
                 .about("Reports and analytics")
                 .subcommand_required(true)
-                .subcommand(Command::new("balances").about("Account balances")
-                    .arg(arg!(--base).action(ArgAction::SetTrue))
-                    .arg(arg!(--currency <CCY> "Override output currency").required(false))
-                    .arg(arg!(--json).action(ArgAction::SetTrue).conflicts_with("jsonl"))
-                    .arg(arg!(--jsonl).action(ArgAction::SetTrue).conflicts_with("json")))
-                .subcommand(Command::new("cashflow").about("Monthly cashflow (income/expense)")
-                    .arg(arg!(--months <N>).value_parser(value_parser!(usize)).required(false))
-                    .arg(arg!(--base).action(ArgAction::SetTrue))
-                    .arg(arg!(--currency <CCY> "Override output currency").required(false))
-                    .arg(arg!(--json).action(ArgAction::SetTrue).conflicts_with("jsonl"))
-                    .arg(arg!(--jsonl).action(ArgAction::SetTrue).conflicts_with("json")))
-                .subcommand(Command::new("spend-by-category").about("Spending by category for a month")
-                    .arg(arg!(--month <YYYY_MM>).required(true))
-                    .arg(arg!(--base).action(ArgAction::SetTrue))
-                    .arg(arg!(--currency <CCY> "Override output currency").required(false))
-                    .arg(arg!(--json).action(ArgAction::SetTrue).conflicts_with("jsonl"))
-                    .arg(arg!(--jsonl).action(ArgAction::SetTrue).conflicts_with("json")))
+                .subcommand(
+                    Command::new("balances")
+                        .about("Account balances")
+                        .arg(arg!(--base).action(ArgAction::SetTrue))
+                        .arg(arg!(--currency <CCY> "Override output currency").required(false))
+                        .arg(
+                            arg!(--json)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("jsonl"),
+                        )
+                        .arg(
+                            arg!(--jsonl)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("json"),
+                        ),
+                )
+                .subcommand(
+                    Command::new("cashflow")
+                        .about("Monthly cashflow (income/expense)")
+                        .arg(
+                            arg!(--months <N>)
+                                .value_parser(value_parser!(usize))
+                                .required(false),
+                        )
+                        .arg(arg!(--base).action(ArgAction::SetTrue))
+                        .arg(arg!(--currency <CCY> "Override output currency").required(false))
+                        .arg(
+                            arg!(--json)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("jsonl"),
+                        )
+                        .arg(
+                            arg!(--jsonl)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("json"),
+                        ),
+                )
+                .subcommand(
+                    Command::new("spend-by-category")
+                        .about("Spending by category for a month")
+                        .arg(arg!(--month <YYYY_MM>).required(true))
+                        .arg(arg!(--base).action(ArgAction::SetTrue))
+                        .arg(arg!(--currency <CCY> "Override output currency").required(false))
+                        .arg(
+                            arg!(--json)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("jsonl"),
+                        )
+                        .arg(
+                            arg!(--jsonl)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("json"),
+                        ),
+                ),
         )
         .subcommand(
             Command::new("portfolio")
                 .about("Track assets and trades")
                 .subcommand_required(true)
-                .subcommand(Command::new("add-asset").about("Add asset").arg(arg!(--ticker <TICKER>).required(true)).arg(arg!(--name <NAME>).required(true)).arg(arg!(--currency <CCY>).required(true)))
+                .subcommand(
+                    Command::new("add-asset")
+                        .about("Add asset")
+                        .arg(arg!(--ticker <TICKER>).required(true))
+                        .arg(arg!(--name <NAME>).required(true))
+                        .arg(arg!(--currency <CCY>).required(true)),
+                )
                 .subcommand(Command::new("list-assets").about("List assets"))
-                .subcommand(Command::new("trade").about("Record trade").subcommand_required(true)
-                    .subcommand(Command::new("buy").about("Buy").arg(arg!(--date <YYYY_MM_DD>).required(true)).arg(arg!(--ticker <TICKER>).required(true)).arg(arg!(--account <ACCOUNT>).required(true)).arg(arg!(--quantity <QTY>).required(true)).arg(arg!(--price <PRICE>).required(true)).arg(arg!(--fees <FEES>).required(false)))
-                    .subcommand(Command::new("sell").about("Sell").arg(arg!(--date <YYYY_MM_DD>).required(true)).arg(arg!(--ticker <TICKER>).required(true)).arg(arg!(--account <ACCOUNT>).required(true)).arg(arg!(--quantity <QTY>).required(true)).arg(arg!(--price <PRICE>).required(true)).arg(arg!(--fees <FEES>).required(false))))
-                .subcommand(Command::new("value").about("Portfolio value").arg(arg!(--live).action(ArgAction::SetTrue)))
-                .subcommand(Command::new("tax").about("FIFO capital gains").arg(arg!(--year <YYYY>).required(true)))
-                .subcommand(Command::new("price").about("Prices").subcommand_required(true).subcommand(Command::new("fetch").about("Fetch & cache (Yahoo)")).subcommand(Command::new("list").about("List cached")))
+                .subcommand(
+                    Command::new("trade")
+                        .about("Record trade")
+                        .subcommand_required(true)
+                        .subcommand(
+                            Command::new("buy")
+                                .about("Buy")
+                                .arg(arg!(--date <YYYY_MM_DD>).required(true))
+                                .arg(arg!(--ticker <TICKER>).required(true))
+                                .arg(arg!(--account <ACCOUNT>).required(true))
+                                .arg(arg!(--quantity <QTY>).required(true))
+                                .arg(arg!(--price <PRICE>).required(true))
+                                .arg(arg!(--fees <FEES>).required(false)),
+                        )
+                        .subcommand(
+                            Command::new("sell")
+                                .about("Sell")
+                                .arg(arg!(--date <YYYY_MM_DD>).required(true))
+                                .arg(arg!(--ticker <TICKER>).required(true))
+                                .arg(arg!(--account <ACCOUNT>).required(true))
+                                .arg(arg!(--quantity <QTY>).required(true))
+                                .arg(arg!(--price <PRICE>).required(true))
+                                .arg(arg!(--fees <FEES>).required(false)),
+                        ),
+                )
+                .subcommand(
+                    Command::new("value")
+                        .about("Portfolio value")
+                        .arg(arg!(--live).action(ArgAction::SetTrue)),
+                )
+                .subcommand(
+                    Command::new("tax")
+                        .about("FIFO capital gains")
+                        .arg(arg!(--year <YYYY>).required(true)),
+                )
+                .subcommand(
+                    Command::new("price")
+                        .about("Prices")
+                        .subcommand_required(true)
+                        .subcommand(Command::new("fetch").about("Fetch & cache (Yahoo)"))
+                        .subcommand(Command::new("list").about("List cached")),
+                ),
         )
         .subcommand(
             Command::new("import")
                 .about("Import (CSV)")
                 .subcommand_required(true)
-                .subcommand(Command::new("transactions").about("CSV: date,payee,amount,category,account,currency,note").arg(arg!(--path <PATH>).required(true)))
+                .subcommand(
+                    Command::new("transactions")
+                        .about("CSV: date,payee,amount,category,account,currency,note")
+                        .arg(arg!(--path <PATH>).required(true)),
+                ),
         )
         .subcommand(
             Command::new("export")
                 .about("Export data")
                 .subcommand_required(true)
-                .subcommand(Command::new("transactions").about("Export transactions").arg(arg!(--format <FMT> "csv|json").required(true)).arg(arg!(--out <PATH>).required(true)))
+                .subcommand(
+                    Command::new("transactions")
+                        .about("Export transactions")
+                        .arg(arg!(--format <FMT> "csv|json").required(true))
+                        .arg(arg!(--out <PATH>).required(true)),
+                ),
         )
         .subcommand(
             Command::new("fx")
                 .about("Foreign exchange (ECB via Frankfurter)")
                 .subcommand_required(true)
-                .subcommand(Command::new("set-base").about("Set base currency").arg(arg!(--currency <CCY>).required(true)))
-                .subcommand(Command::new("fetch").about("Fetch historical FX (for currencies you use)").arg(arg!(--days <N>).value_parser(value_parser!(usize)).required(false)))
+                .subcommand(
+                    Command::new("set-base")
+                        .about("Set base currency")
+                        .arg(arg!(--currency <CCY>).required(true)),
+                )
+                .subcommand(
+                    Command::new("fetch")
+                        .about("Fetch historical FX (for currencies you use)")
+                        .arg(
+                            arg!(--days <N>)
+                                .value_parser(value_parser!(usize))
+                                .required(false),
+                        ),
+                )
                 .subcommand(Command::new("list").about("List cached FX rates"))
-                .subcommand(Command::new("convert").about("Convert an amount using cached rates")
-                    .arg(arg!(--date <YYYY_MM_DD>).required(true))
-                    .arg(arg!(--amount <AMOUNT>).required(true))
-                    .arg(arg!(--from <CCY>).required(true))
-                    .arg(arg!(--to <CCY>).required(true)))
+                .subcommand(
+                    Command::new("convert")
+                        .about("Convert an amount using cached rates")
+                        .arg(arg!(--date <YYYY_MM_DD>).required(true))
+                        .arg(arg!(--amount <AMOUNT>).required(true))
+                        .arg(arg!(--from <CCY>).required(true))
+                        .arg(arg!(--to <CCY>).required(true)),
+                ),
         )
-        .subcommand(Command::new("doctor").about("Run health checks: FX coverage, currencies, orphan data"))
-        .subcommand(Command::new("rules").about("Import rules: auto-categorize by payee patterns").subcommand_required(true)
-            .subcommand(Command::new("add").about("Add rule")
-                .arg(arg!(--pattern <REGEX>).required(true))
-                .arg(arg!(--category <CAT>).required(false))
-                .arg(arg!(--payee_rewrite <NAME>).required(false)))
-            .subcommand(Command::new("list").about("List rules"))
-            .subcommand(Command::new("rm").about("Remove rule").arg(arg!(--id <ID>).required(true))))
+        .subcommand(
+            Command::new("doctor").about("Run health checks: FX coverage, currencies, orphan data"),
+        )
+        .subcommand(
+            Command::new("rules")
+                .about("Import rules: auto-categorize by payee patterns")
+                .subcommand_required(true)
+                .subcommand(
+                    Command::new("add")
+                        .about("Add rule")
+                        .arg(arg!(--pattern <REGEX>).required(true))
+                        .arg(arg!(--category <CAT>).required(false))
+                        .arg(arg!(--payee_rewrite <NAME>).required(false)),
+                )
+                .subcommand(Command::new("list").about("List rules"))
+                .subcommand(
+                    Command::new("rm")
+                        .about("Remove rule")
+                        .arg(arg!(--id <ID>).required(true)),
+                ),
+        )
         .subcommand(
             Command::new("envelope")
                 .about("Envelope budgeting (zero-based)")
                 .subcommand_required(true)
-                .subcommand(Command::new("fund").about("Fund category envelope (BASE currency)").arg(arg!(--month <YYYY_MM>).required(true)).arg(arg!(--category <CAT>).required(true)).arg(arg!(--amount <AMOUNT>).required(true)))
-                .subcommand(Command::new("move").about("Move funds between envelopes").arg(arg!(--month <YYYY_MM>).required(true)).arg(arg!(--from <CAT>).required(true)).arg(arg!(--to <CAT>).required(true)).arg(arg!(--amount <AMOUNT>).required(true)))
-                .subcommand(Command::new("status").about("Carryover, budget, spent, available (BASE)")
-                    .arg(arg!(--month <YYYY_MM>).required(true))
-                    .arg(arg!(--currency <CCY> "Override output currency").required(false))
-                    .arg(arg!(--json).action(ArgAction::SetTrue).conflicts_with("jsonl"))
-                    .arg(arg!(--jsonl).action(ArgAction::SetTrue).conflicts_with("json")))
+                .subcommand(
+                    Command::new("fund")
+                        .about("Fund category envelope (BASE currency)")
+                        .arg(arg!(--month <YYYY_MM>).required(true))
+                        .arg(arg!(--category <CAT>).required(true))
+                        .arg(arg!(--amount <AMOUNT>).required(true)),
+                )
+                .subcommand(
+                    Command::new("move")
+                        .about("Move funds between envelopes")
+                        .arg(arg!(--month <YYYY_MM>).required(true))
+                        .arg(arg!(--from <CAT>).required(true))
+                        .arg(arg!(--to <CAT>).required(true))
+                        .arg(arg!(--amount <AMOUNT>).required(true)),
+                )
+                .subcommand(
+                    Command::new("status")
+                        .about("Carryover, budget, spent, available (BASE)")
+                        .arg(arg!(--month <YYYY_MM>).required(true))
+                        .arg(arg!(--currency <CCY> "Override output currency").required(false))
+                        .arg(
+                            arg!(--json)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("jsonl"),
+                        )
+                        .arg(
+                            arg!(--jsonl)
+                                .action(ArgAction::SetTrue)
+                                .conflicts_with("json"),
+                        ),
+                ),
         )
 }

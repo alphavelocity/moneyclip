@@ -4,9 +4,9 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
+use crate::utils::pretty_table;
 use anyhow::Result;
 use rusqlite::{params, Connection};
-use crate::utils::pretty_table;
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {
@@ -19,7 +19,9 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
             let mut stmt = conn.prepare("SELECT name FROM categories ORDER BY name")?;
             let rows = stmt.query_map([], |r| r.get::<_, String>(0))?;
             let mut data = Vec::new();
-            for row in rows { data.push(vec![row?]); }
+            for row in rows {
+                data.push(vec![row?]);
+            }
             println!("{}", pretty_table(&["Category"], data));
         }
         Some(("rm", sub)) => {

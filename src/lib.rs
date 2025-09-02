@@ -5,7 +5,7 @@
 // LICENSE file in the root directory of this source tree.
 
 pub mod cli;
+pub mod commands;
 pub mod db;
 pub mod models;
 pub mod utils;
-pub mod commands;

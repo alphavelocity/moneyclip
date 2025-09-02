@@ -4,15 +4,17 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
+use crate::utils::pretty_table;
 use anyhow::Result;
 use rusqlite::{Connection, OptionalExtension};
-use crate::utils::pretty_table;
 
 pub fn handle(conn: &Connection) -> Result<()> {
     let mut rows = Vec::new();
 
     // 1) Unknown currencies
-    let mut stmt = conn.prepare("SELECT DISTINCT currency FROM transactions EXCEPT SELECT currency FROM accounts")?;
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT currency FROM transactions EXCEPT SELECT currency FROM accounts",
+    )?;
     let mut cur = stmt.query([])?;
     while let Some(r) = cur.next()? {
         let c: String = r.get(0)?;
@@ -21,7 +23,8 @@ pub fn handle(conn: &Connection) -> Result<()> {
 
     // 2) FX coverage gaps: transactions with currency != base lacking a rate on or before date
     let base = crate::utils::get_base_currency(conn)?;
-    let mut stmt2 = conn.prepare("SELECT date, currency FROM transactions WHERE currency != ?1 ORDER BY date")?;
+    let mut stmt2 =
+        conn.prepare("SELECT date, currency FROM transactions WHERE currency != ?1 ORDER BY date")?;
     let mut cur2 = stmt2.query([&base])?;
     while let Some(r) = cur2.next()? {
         let d: String = r.get(0)?;
@@ -37,7 +40,7 @@ pub fn handle(conn: &Connection) -> Result<()> {
     if rows.is_empty() {
         println!("✅ doctor: no issues found");
     } else {
-        println!("{}", pretty_table(&["Issue","Detail"], rows));
+        println!("{}", pretty_table(&["Issue", "Detail"], rows));
     }
     Ok(())
 }

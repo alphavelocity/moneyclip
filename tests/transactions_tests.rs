@@ -31,11 +31,8 @@ fn setup() -> Connection {
         [],
     )
     .unwrap();
-    conn.execute(
-        "INSERT INTO categories(id,name) VALUES (1,'Cat1')",
-        [],
-    )
-    .unwrap();
+    conn.execute("INSERT INTO categories(id,name) VALUES (1,'Cat1')", [])
+        .unwrap();
     for i in 1..=3 {
         conn.execute(
             "INSERT INTO transactions(date,account_id,amount,payee,category_id,currency,note) VALUES (?1,1,'-10','P',1,'USD','')",
@@ -50,13 +47,7 @@ fn setup() -> Connection {
 fn list_limit_respected() {
     let conn = setup();
     let cli = cli::build_cli();
-    let matches = cli.get_matches_from([
-        "moneyclip",
-        "tx",
-        "list",
-        "--limit",
-        "2",
-    ]);
+    let matches = cli.get_matches_from(["moneyclip", "tx", "list", "--limit", "2"]);
     if let Some(("tx", tx_m)) = matches.subcommand() {
         if let Some(("list", list_m)) = tx_m.subcommand() {
             let rows = transactions::query_rows(&conn, list_m).unwrap();

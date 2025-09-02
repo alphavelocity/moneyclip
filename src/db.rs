@@ -11,7 +11,8 @@ use rusqlite::Connection;
 use std::fs;
 use std::path::PathBuf;
 
-static APP: Lazy<(&str, &str, &str)> = Lazy::new(|| ("com.alphavelocity", "Moneyclip", "moneyclip"));
+static APP: Lazy<(&str, &str, &str)> =
+    Lazy::new(|| ("com.alphavelocity", "Moneyclip", "moneyclip"));
 
 pub fn db_path() -> Result<PathBuf> {
     let proj = ProjectDirs::from(APP.0, APP.1, APP.2)
@@ -23,13 +24,15 @@ pub fn db_path() -> Result<PathBuf> {
 
 pub fn open_or_init() -> Result<Connection> {
     let path = db_path()?;
-    let mut conn = Connection::open(&path).with_context(|| format!("Open DB at {}", path.display()))?;
+    let mut conn =
+        Connection::open(&path).with_context(|| format!("Open DB at {}", path.display()))?;
     init_schema(&mut conn)?;
     Ok(conn)
 }
 
 fn init_schema(conn: &mut Connection) -> Result<()> {
-    conn.execute_batch(r#"
+    conn.execute_batch(
+        r#"
     PRAGMA foreign_keys = ON;
 
     CREATE TABLE IF NOT EXISTS settings(
@@ -125,6 +128,7 @@ fn init_schema(conn: &mut Connection) -> Result<()> {
         created_at TEXT NOT NULL DEFAULT (datetime('now')),
         FOREIGN KEY(category_id) REFERENCES categories(id) ON DELETE SET NULL
     );
-    "#)?;
+    "#,
+    )?;
     Ok(())
 }

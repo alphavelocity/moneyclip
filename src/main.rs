@@ -7,10 +7,10 @@
 use anyhow::Result;
 
 mod cli;
+mod commands;
 mod db;
 mod models;
 mod utils;
-mod commands;
 
 fn main() -> Result<()> {
     let cli = cli::build_cli();
@@ -34,7 +34,10 @@ fn main() -> Result<()> {
         Some(("doctor", _)) => commands::doctor::handle(&conn)?,
         Some(("envelope", sub)) => commands::envelopes::handle(&conn, sub)?,
         Some(("rules", sub)) => commands::rules::handle(&conn, sub)?,
-        _ => { cli::build_cli().print_help()?; println!(); }
+        _ => {
+            cli::build_cli().print_help()?;
+            println!();
+        }
     }
     Ok(())
 }
