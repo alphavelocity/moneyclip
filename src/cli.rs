@@ -4,7 +4,7 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
-use clap::{arg, command, value_parser, ArgAction, Command};
+use clap::{ArgAction, Command, arg, command, value_parser};
 
 pub fn build_cli() -> Command {
     command!()

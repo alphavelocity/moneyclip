@@ -7,7 +7,7 @@
 use crate::utils::{apply_import_rules, id_for_account, id_for_category};
 use anyhow::{Context, Result};
 use csv::ReaderBuilder;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {

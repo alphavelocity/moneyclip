@@ -8,7 +8,7 @@ use crate::utils::{
     fx_convert, get_base_currency, id_for_category, parse_decimal, parse_month, pretty_table,
 };
 use anyhow::{Context, Result};
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, params};
 use rust_decimal::Decimal;
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {

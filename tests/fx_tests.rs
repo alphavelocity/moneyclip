@@ -5,7 +5,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use chrono::NaiveDate;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use rust_decimal::Decimal;
 
 fn setup() -> Connection {

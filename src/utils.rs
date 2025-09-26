@@ -6,8 +6,8 @@
 
 use anyhow::{Context, Result};
 use chrono::NaiveDate;
-use comfy_table::{presets::UTF8_FULL, Cell, Table};
-use rusqlite::{params, Connection, OptionalExtension};
+use comfy_table::{Cell, Table, presets::UTF8_FULL};
+use rusqlite::{Connection, OptionalExtension, params};
 use rust_decimal::Decimal;
 
 const UA: &str = concat!(

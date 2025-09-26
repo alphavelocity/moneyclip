@@ -6,7 +6,7 @@
 
 use crate::utils::pretty_table;
 use anyhow::Result;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {

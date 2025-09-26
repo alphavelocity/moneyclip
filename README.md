@@ -1,6 +1,23 @@
-# Moneyclip
+<h1 align="center">
+Moneyclip
+</h1>
 
-Multi-currency **personal finance**, **envelope budgeting**, and **portfolio** CLI.
+<h3 align="center">
+Multi-currency <em>personal finance</em>, <em>envelope budgeting</em>, and <em>portfolio</em> CLI.
+<h3>
+
+---
+
+<div align="center">
+
+[![rustc 1.85+](https://img.shields.io/badge/rustc-1.85+-blue.svg?logo=rust&logoColor=white)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
+[![Test Linux](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-ubuntu.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-ubuntu.yml?query=branch%3Amain)
+[![Test Windows](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-windows.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-windows.yml?query=branch%3Amain)
+[![Test MacOS](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-macos.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-macos.yml?query=branch%3Amain)
+[![Lints](https://github.com/neuralsorcerer/moneyclip/actions/workflows/lints.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/lints.yml?query=branch%3Amain)
+[![License](https://img.shields.io/badge/License-Apache%202.0-3c60b1.svg?logo=opensourceinitiative&logoColor=white)](./LICENSE)
+
+</div>
 
 ## Features
 

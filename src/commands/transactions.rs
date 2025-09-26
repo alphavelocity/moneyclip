@@ -9,7 +9,7 @@ use crate::utils::{
     parse_decimal, pretty_table,
 };
 use anyhow::Result;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use serde::Serialize;
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
@@ -93,7 +93,9 @@ fn list(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
         println!(
             "{}",
             pretty_table(
-                &["Date", "Account", "Payee", "Amount", "CCY", "Category", "Note"],
+                &[
+                    "Date", "Account", "Payee", "Amount", "CCY", "Category", "Note"
+                ],
                 rows,
             )
         );

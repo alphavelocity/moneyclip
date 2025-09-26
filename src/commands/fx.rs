@@ -7,7 +7,7 @@
 use crate::utils::{get_base_currency, http_client, pretty_table, set_base_currency};
 use anyhow::Result;
 use chrono::Utc;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use serde::Deserialize;
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {

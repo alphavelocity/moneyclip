@@ -1,0 +1,16 @@
+name: Tests (Windows)
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+
+jobs:
+    test:
+        runs-on: windows-latest
+
+        steps:
+            - uses: actions/checkout@v4
+            - uses: dtolnay/rust-toolchain@stable
+            - name: Run tests
+              run: cargo test --all --locked

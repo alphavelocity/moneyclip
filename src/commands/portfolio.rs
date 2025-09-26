@@ -9,7 +9,7 @@ use crate::utils::{
 };
 use anyhow::Result;
 use chrono::Utc;
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 use serde::Deserialize;
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {

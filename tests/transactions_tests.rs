@@ -5,7 +5,7 @@
 // LICENSE file in the root directory of this source tree.
 
 use moneyclip::{cli, commands::transactions};
-use rusqlite::{params, Connection};
+use rusqlite::{Connection, params};
 
 fn setup() -> Connection {
     let conn = Connection::open_in_memory().unwrap();
