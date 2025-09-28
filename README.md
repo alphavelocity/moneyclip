@@ -130,4 +130,4 @@ moneyclip rules list
 
 ## License
 
-See [LICENSE](LICENSE) for full license text.
+This project is licensed under the Apache License - see the [LICENSE](LICENSE) file for details.
