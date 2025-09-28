@@ -4,7 +4,9 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
+use moneyclip::{cli, commands::envelopes};
 use rusqlite::{Connection, params};
+use rust_decimal::Decimal;
 
 fn setup() -> Connection {
     let conn = Connection::open_in_memory().unwrap();
@@ -70,4 +72,70 @@ fn envelope_carry_budget_spent() {
     assert_eq!(format!("{:.2}", carry.round_dp(2)), "100.00");
     assert_eq!(format!("{:.2}", budget_m.round_dp(2)), "0.00");
     assert_eq!(format!("{:.2}", spent_m.round_dp(2)), "4.82");
+}
+
+#[test]
+fn envelope_fund_trims_inputs() {
+    let conn = setup();
+    let cat_id: i64 = conn
+        .query_row(
+            "SELECT id FROM categories WHERE name='Groceries'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+
+    let cli = cli::build_cli();
+    let matches = cli.get_matches_from([
+        "moneyclip",
+        "envelope",
+        "fund",
+        "--month",
+        " 2025-07 ",
+        "--category",
+        " Groceries ",
+        "--amount",
+        " 25.00 ",
+    ]);
+    if let Some(("envelope", env_m)) = matches.subcommand() {
+        envelopes::handle(&conn, env_m).unwrap();
+    } else {
+        panic!("envelope command not parsed");
+    }
+
+    let amount: String = conn
+        .query_row(
+            "SELECT amount FROM budgets WHERE month='2025-07' AND category_id=?1",
+            params![cat_id],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(amount, "125.00");
+}
+
+#[test]
+fn envelope_carryover_preserves_decimal_precision() {
+    let conn = setup();
+    let cat_id: i64 = conn
+        .query_row(
+            "SELECT id FROM categories WHERE name='Groceries'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+
+    for month in ["2025-01", "2025-02", "2025-03"] {
+        conn.execute(
+            "INSERT INTO budgets(month, category_id, amount) VALUES(?1, ?2, '0.10')",
+            params![month, cat_id],
+        )
+        .unwrap();
+    }
+
+    let (carryover, budget_m, spent_m) =
+        envelopes::envelope_compute(&conn, cat_id, "2025-04").unwrap();
+
+    assert_eq!(carryover, Decimal::from_str_exact("0.30").unwrap());
+    assert!(budget_m.is_zero());
+    assert!(spent_m.is_zero());
 }

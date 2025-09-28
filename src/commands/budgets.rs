@@ -7,6 +7,7 @@
 use crate::utils::{id_for_category, parse_decimal, parse_month, pretty_table};
 use anyhow::{Context, Result};
 use rusqlite::{Connection, OptionalExtension, params};
+use rust_decimal::Decimal;
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {
@@ -19,10 +20,14 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
 }
 
 fn set(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
-    let month = parse_month(sub.get_one::<String>("month").unwrap())?;
-    let cat = sub.get_one::<String>("category").unwrap();
-    let amount = parse_decimal(sub.get_one::<String>("amount").unwrap())?;
-    let cat_id = id_for_category(conn, cat)?;
+    let month = parse_month(sub.get_one::<String>("month").unwrap().trim())?;
+    let cat = sub
+        .get_one::<String>("category")
+        .unwrap()
+        .trim()
+        .to_string();
+    let amount = parse_decimal(sub.get_one::<String>("amount").unwrap().trim())?;
+    let cat_id = id_for_category(conn, &cat)?;
     conn.execute(
         "INSERT INTO budgets(month, category_id, amount) VALUES (?1,?2,?3)
          ON CONFLICT(month, category_id) DO UPDATE SET amount=excluded.amount",
@@ -36,56 +41,61 @@ fn list(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
     let mut sql = String::from(
         "SELECT b.month, c.name, b.amount FROM budgets b JOIN categories c ON b.category_id=c.id",
     );
-    if let Some(month) = sub.get_one::<String>("month") {
-        sql.push_str(" WHERE b.month=?1 ORDER BY c.name");
-        let mut stmt = conn.prepare(&sql)?;
-        let rows = stmt.query_map(params![month], |r| {
-            Ok((
-                r.get::<_, String>(0)?,
-                r.get::<_, String>(1)?,
-                r.get::<_, String>(2)?,
-            ))
-        })?;
-        let mut data = Vec::new();
-        for row in rows {
-            let (m, c, a) = row?;
-            data.push(vec![m, c, a]);
+    if let Some(month_raw) = sub.get_one::<String>("month") {
+        let month = month_raw.trim();
+        if !month.is_empty() {
+            sql.push_str(" WHERE b.month=?1 ORDER BY c.name");
+            let mut stmt = conn.prepare(&sql)?;
+            let rows = stmt.query_map(params![month], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, String>(2)?,
+                ))
+            })?;
+            let mut data = Vec::new();
+            for row in rows {
+                let (m, c, a) = row?;
+                data.push(vec![m, c, a]);
+            }
+            println!(
+                "{}",
+                pretty_table(&["Month", "Category", "Budget (BASE)"], data)
+            );
+            return Ok(());
         }
-        println!(
-            "{}",
-            pretty_table(&["Month", "Category", "Budget (BASE)"], data)
-        );
-    } else {
-        sql.push_str(" ORDER BY b.month DESC, c.name");
-        let mut stmt = conn.prepare(&sql)?;
-        let rows = stmt.query_map([], |r| {
-            Ok((
-                r.get::<_, String>(0)?,
-                r.get::<_, String>(1)?,
-                r.get::<_, String>(2)?,
-            ))
-        })?;
-        let mut data = Vec::new();
-        for row in rows {
-            let (m, c, a) = row?;
-            data.push(vec![m, c, a]);
-        }
-        println!(
-            "{}",
-            pretty_table(&["Month", "Category", "Budget (BASE)"], data)
-        );
     }
+    sql.push_str(" ORDER BY b.month DESC, c.name");
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map([], |r| {
+        Ok((
+            r.get::<_, String>(0)?,
+            r.get::<_, String>(1)?,
+            r.get::<_, String>(2)?,
+        ))
+    })?;
+    let mut data = Vec::new();
+    for row in rows {
+        let (m, c, a) = row?;
+        data.push(vec![m, c, a]);
+    }
+    println!(
+        "{}",
+        pretty_table(&["Month", "Category", "Budget (BASE)"], data)
+    );
     Ok(())
 }
 
 fn report(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
     let json_flag = sub.get_flag("json");
     let jsonl_flag = sub.get_flag("jsonl");
-    let month = sub.get_one::<String>("month").unwrap();
-    let out_ccy = sub.get_one::<String>("currency").map(|s| s.to_uppercase());
+    let month = sub.get_one::<String>("month").unwrap().trim().to_string();
+    let out_ccy = sub
+        .get_one::<String>("currency")
+        .map(|s| s.trim().to_uppercase());
     let base_ccy = crate::utils::get_base_currency(conn)?;
 
-    let data = build_budget_report(conn, month, &base_ccy, out_ccy.as_deref())?;
+    let data = build_budget_report(conn, &month, &base_ccy, out_ccy.as_deref())?;
     let display_ccy = out_ccy.as_deref().unwrap_or(&base_ccy);
 
     if !crate::utils::maybe_print_json(json_flag, jsonl_flag, &data)? {
@@ -105,40 +115,45 @@ fn build_budget_report(
     base_ccy: &str,
     out_ccy: Option<&str>,
 ) -> Result<Vec<Vec<String>>> {
-    let mut cats_stmt = conn.prepare("SELECT id, name FROM categories ORDER BY name")?;
-    let cats = cats_stmt.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?)))?;
+    let categories = {
+        let mut stmt = conn.prepare_cached("SELECT id, name FROM categories ORDER BY name")?;
+        let mut rows = stmt.query([])?;
+        let mut cats = Vec::new();
+        while let Some(row) = rows.next()? {
+            cats.push((row.get::<_, i64>(0)?, row.get::<_, String>(1)?));
+        }
+        cats
+    };
+
+    let mut budget_stmt =
+        conn.prepare_cached("SELECT amount FROM budgets WHERE category_id=?1 AND month=?2")?;
+    let mut tx_stmt = conn.prepare_cached(
+        "SELECT date, amount, currency FROM transactions WHERE category_id=?1 AND amount<0 AND substr(date,1,7)=?2",
+    )?;
 
     let month_end = crate::utils::month_end(month)?;
-    let mut data = Vec::new();
+    let mut data = Vec::with_capacity(categories.len());
 
-    for c in cats {
-        let (cid, cname) = c?;
-        let budget_s: Option<String> = conn
-            .query_row(
-                "SELECT amount FROM budgets WHERE category_id=?1 AND month=?2",
-                params![cid, month],
-                |r| r.get(0),
-            )
+    for (cid, cname) in categories {
+        let budget_s: Option<String> = budget_stmt
+            .query_row(params![cid, month], |r| r.get(0))
             .optional()?;
         let budget_dec = match budget_s {
             Some(ref s) => s
-                .parse::<rust_decimal::Decimal>()
+                .parse::<Decimal>()
                 .with_context(|| format!("Invalid budget amount '{}' for {}", s, month))?,
-            None => rust_decimal::Decimal::ZERO,
+            None => Decimal::ZERO,
         };
 
-        let mut tstmt = conn.prepare(
-            "SELECT date, amount, currency FROM transactions WHERE category_id=?1 AND amount<0 AND substr(date,1,7)=?2",
-        )?;
-        let mut trs = tstmt.query(params![cid, month])?;
-        let mut spent_base = rust_decimal::Decimal::ZERO;
+        let mut trs = tx_stmt.query(params![cid, month])?;
+        let mut spent_base = Decimal::ZERO;
         while let Some(r) = trs.next()? {
             let d: String = r.get(0)?;
             let amt_s: String = r.get(1)?;
             let ccy: String = r.get(2)?;
             let date = chrono::NaiveDate::parse_from_str(&d, "%Y-%m-%d")?;
             let amt = amt_s
-                .parse::<rust_decimal::Decimal>()
+                .parse::<Decimal>()
                 .with_context(|| format!("Invalid amount '{}' in transactions", amt_s))?;
             let conv = crate::utils::fx_convert(conn, date, amt.abs(), &ccy, base_ccy)?;
             spent_base += conv;

@@ -22,10 +22,14 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
 }
 
 fn fund(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
-    let month = parse_month(sub.get_one::<String>("month").unwrap())?;
-    let cat = sub.get_one::<String>("category").unwrap();
-    let amount = parse_decimal(sub.get_one::<String>("amount").unwrap())?;
-    let cat_id = id_for_category(conn, cat)?;
+    let month = parse_month(sub.get_one::<String>("month").unwrap().trim())?;
+    let cat = sub
+        .get_one::<String>("category")
+        .unwrap()
+        .trim()
+        .to_string();
+    let amount = parse_decimal(sub.get_one::<String>("amount").unwrap().trim())?;
+    let cat_id = id_for_category(conn, &cat)?;
 
     let existing: Option<String> = conn
         .query_row(
@@ -52,12 +56,12 @@ fn fund(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
 }
 
 fn move_between(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
-    let month = parse_month(sub.get_one::<String>("month").unwrap())?;
-    let from = sub.get_one::<String>("from").unwrap();
-    let to = sub.get_one::<String>("to").unwrap();
-    let amount = parse_decimal(sub.get_one::<String>("amount").unwrap())?;
-    let from_id = id_for_category(conn, from)?;
-    let to_id = id_for_category(conn, to)?;
+    let month = parse_month(sub.get_one::<String>("month").unwrap().trim())?;
+    let from = sub.get_one::<String>("from").unwrap().trim().to_string();
+    let to = sub.get_one::<String>("to").unwrap().trim().to_string();
+    let amount = parse_decimal(sub.get_one::<String>("amount").unwrap().trim())?;
+    let from_id = id_for_category(conn, &from)?;
+    let to_id = id_for_category(conn, &to)?;
 
     let get_amt = |id: i64| -> Result<Decimal> {
         let v: Option<String> = conn
@@ -103,17 +107,19 @@ fn move_between(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
 fn status(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
     let json_flag = sub.get_flag("json");
     let jsonl_flag = sub.get_flag("jsonl");
-    let month = sub.get_one::<String>("month").unwrap();
-    let out_ccy = sub.get_one::<String>("currency").map(|s| s.to_uppercase());
+    let month = sub.get_one::<String>("month").unwrap().trim().to_string();
+    let out_ccy = sub
+        .get_one::<String>("currency")
+        .map(|s| s.trim().to_uppercase());
     let mut stmt_c = conn.prepare("SELECT id, name FROM categories ORDER BY name")?;
     let cats = stmt_c.query_map([], |r| Ok((r.get::<_, i64>(0)?, r.get::<_, String>(1)?)))?;
 
     let mut rows = Vec::new();
     for c in cats {
         let (cat_id, cat_name) = c?;
-        let (carry, budget_m, spent_m) = envelope_compute(conn, cat_id, month)?;
+        let (carry, budget_m, spent_m) = envelope_compute(conn, cat_id, &month)?;
         let available = carry + budget_m - spent_m;
-        let dt = crate::utils::month_end(month)?;
+        let dt = crate::utils::month_end(&month)?;
         let base = crate::utils::get_base_currency(conn)?;
         let disp_c = |v: rust_decimal::Decimal| -> Result<String> {
             if let Some(ref c) = out_ccy {
@@ -152,13 +158,20 @@ pub fn envelope_compute(
 ) -> Result<(Decimal, Decimal, Decimal)> {
     let base = crate::utils::get_base_currency(conn)?;
 
-    let prior_budgets: f64 = conn.query_row(
-        "SELECT IFNULL(SUM(CAST(amount AS REAL)),0) FROM budgets WHERE category_id=?1 AND month<?2",
-        params![category_id, month],
-        |r| r.get(0),
-    )?;
-    let mut carryover = Decimal::try_from(prior_budgets)
-        .with_context(|| format!("Invalid prior budget total {}", prior_budgets))?;
+    let mut carryover = {
+        let mut stmt =
+            conn.prepare_cached("SELECT amount FROM budgets WHERE category_id=?1 AND month<?2")?;
+        let mut rows = stmt.query(params![category_id, month])?;
+        let mut total = Decimal::ZERO;
+        while let Some(row) = rows.next()? {
+            let amount: String = row.get(0)?;
+            let value = amount
+                .parse::<Decimal>()
+                .with_context(|| format!("Invalid budget amount '{}' before {}", amount, month))?;
+            total += value;
+        }
+        total
+    };
 
     let mut stmt_t = conn.prepare("SELECT date, amount, currency FROM transactions WHERE category_id=?1 AND amount<0 AND substr(date,1,7)<?2")?;
     let mut cur = stmt_t.query(params![category_id, month])?;

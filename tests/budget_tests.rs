@@ -4,9 +4,10 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
+use moneyclip::{cli, commands::budgets};
 use rusqlite::{Connection, params};
 
-fn setup() -> Connection {
+fn base_conn() -> Connection {
     let conn = Connection::open_in_memory().unwrap();
     conn.execute_batch(r#"
         PRAGMA foreign_keys = ON;
@@ -21,6 +22,11 @@ fn setup() -> Connection {
         [],
     )
     .unwrap();
+    conn
+}
+
+fn setup() -> Connection {
+    let conn = base_conn();
     conn.execute("INSERT INTO categories(name) VALUES('Dining')", [])
         .unwrap();
     let cat_id: i64 = conn
@@ -39,6 +45,40 @@ fn setup() -> Connection {
     )
     .unwrap();
     conn
+}
+
+#[test]
+fn budget_set_trims_inputs() {
+    let conn = base_conn();
+    conn.execute("INSERT INTO categories(name) VALUES('Dining')", [])
+        .unwrap();
+    let cli = cli::build_cli();
+    let matches = cli.get_matches_from([
+        "moneyclip",
+        "budget",
+        "set",
+        "--month",
+        " 2025-09 ",
+        "--category",
+        " Dining ",
+        "--amount",
+        " 75.00 ",
+    ]);
+    if let Some(("budget", budget_m)) = matches.subcommand() {
+        budgets::handle(&conn, budget_m).unwrap();
+    } else {
+        panic!("budget command not parsed");
+    }
+
+    let (month, amount): (String, String) = conn
+        .query_row(
+            "SELECT month, amount FROM budgets ORDER BY id DESC LIMIT 1",
+            [],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .unwrap();
+    assert_eq!(month, "2025-09");
+    assert_eq!(amount, "75.00");
 }
 
 #[test]

@@ -22,7 +22,9 @@ fn balances(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
     let json_flag = sub.get_flag("json");
     let jsonl_flag = sub.get_flag("jsonl");
     let show_base = sub.get_flag("base");
-    let out_ccy = sub.get_one::<String>("currency").map(|s| s.to_uppercase());
+    let out_ccy = sub
+        .get_one::<String>("currency")
+        .map(|s| s.trim().to_uppercase());
     let mut stmt = conn.prepare(
         "SELECT a.name, a.currency, IFNULL(SUM(t.amount),0) AS bal
          FROM accounts a
@@ -69,7 +71,9 @@ fn cashflow(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
     let jsonl_flag = sub.get_flag("jsonl");
     let show_base = sub.get_flag("base");
     let months: usize = *sub.get_one::<usize>("months").unwrap_or(&12);
-    let out_ccy = sub.get_one::<String>("currency").map(|s| s.to_uppercase());
+    let out_ccy = sub
+        .get_one::<String>("currency")
+        .map(|s| s.trim().to_uppercase());
     let mut stmt = conn.prepare(
         "SELECT substr(date,1,7) AS month, date, amount, currency
          FROM transactions
@@ -125,12 +129,14 @@ fn spend_by_category(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
     let json_flag = sub.get_flag("json");
     let jsonl_flag = sub.get_flag("jsonl");
     let show_base = sub.get_flag("base");
-    let month = sub.get_one::<String>("month").unwrap();
-    let out_ccy = sub.get_one::<String>("currency").map(|s| s.to_uppercase());
+    let month = sub.get_one::<String>("month").unwrap().trim().to_string();
+    let out_ccy = sub
+        .get_one::<String>("currency")
+        .map(|s| s.trim().to_uppercase());
     if show_base || out_ccy.is_some() {
         let base = crate::utils::get_base_currency(conn)?;
         let mut stmt = conn.prepare("SELECT c.name, t.date, -t.amount as out, t.currency FROM transactions t LEFT JOIN categories c ON t.category_id=c.id WHERE substr(t.date,1,7)=?1 AND t.amount < 0")?;
-        let rows = stmt.query_map([month], |r| {
+        let rows = stmt.query_map([month.as_str()], |r| {
             Ok((
                 r.get::<_, Option<String>>(0)?,
                 r.get::<_, String>(1)?,
@@ -171,7 +177,7 @@ fn spend_by_category(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
              WHERE substr(t.date,1,7)=?1 AND t.amount < 0
              GROUP BY c.name ORDER BY spent DESC",
         )?;
-        let rows = stmt.query_map([month], |r| {
+        let rows = stmt.query_map([month.as_str()], |r| {
             Ok((r.get::<_, Option<String>>(0)?, r.get::<_, String>(1)?))
         })?;
         let mut data = Vec::new();

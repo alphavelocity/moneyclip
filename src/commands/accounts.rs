@@ -11,9 +11,13 @@ use rusqlite::{Connection, params};
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {
         Some(("add", sub)) => {
-            let name = sub.get_one::<String>("name").unwrap();
-            let typ = sub.get_one::<String>("type").unwrap();
-            let ccy = sub.get_one::<String>("currency").unwrap().to_uppercase();
+            let name = sub.get_one::<String>("name").unwrap().trim().to_string();
+            let typ = sub.get_one::<String>("type").unwrap().trim().to_string();
+            let ccy = sub
+                .get_one::<String>("currency")
+                .unwrap()
+                .trim()
+                .to_uppercase();
             conn.execute(
                 "INSERT INTO accounts(name, type, currency) VALUES (?1, ?2, ?3)",
                 params![name, typ, ccy],
@@ -42,7 +46,7 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
             );
         }
         Some(("rm", sub)) => {
-            let name = sub.get_one::<String>("name").unwrap();
+            let name = sub.get_one::<String>("name").unwrap().trim().to_string();
             conn.execute("DELETE FROM accounts WHERE name=?1", params![name])?;
             println!("Removed account '{}'", name);
         }

@@ -11,7 +11,7 @@ use rusqlite::{Connection, params};
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {
         Some(("add", sub)) => {
-            let name = sub.get_one::<String>("name").unwrap();
+            let name = sub.get_one::<String>("name").unwrap().trim().to_string();
             conn.execute("INSERT INTO categories(name) VALUES (?1)", params![name])?;
             println!("Added category '{}'", name);
         }
@@ -25,7 +25,7 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
             println!("{}", pretty_table(&["Category"], data));
         }
         Some(("rm", sub)) => {
-            let name = sub.get_one::<String>("name").unwrap();
+            let name = sub.get_one::<String>("name").unwrap().trim().to_string();
             conn.execute("DELETE FROM categories WHERE name=?1", params![name])?;
             println!("Removed category '{}'", name);
         }

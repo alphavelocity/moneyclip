@@ -11,10 +11,10 @@ Multi-currency <em>personal finance</em>, <em>envelope budgeting</em>, and <em>p
 <div align="center">
 
 [![rustc 1.85+](https://img.shields.io/badge/rustc-1.85+-blue.svg?logo=rust&logoColor=white)](https://rust-lang.github.io/rfcs/2495-min-rust-version.html)
-[![Test Linux](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-ubuntu.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-ubuntu.yml?query=branch%3Amain)
-[![Test Windows](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-windows.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-windows.yml?query=branch%3Amain)
-[![Test MacOS](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-macos.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/test-macos.yml?query=branch%3Amain)
-[![Lints](https://github.com/neuralsorcerer/moneyclip/actions/workflows/lints.yml/badge.svg)](https://github.com/neuralsorcerer/moneyclip/actions/workflows/lints.yml?query=branch%3Amain)
+[![Test Linux](https://github.com/alphavelocity/moneyclip/actions/workflows/test-ubuntu.yaml/badge.svg)](https://github.com/alphavelocity/moneyclip/actions/workflows/test-ubuntu.yaml?query=branch%3Amain)
+[![Test Windows](https://github.com/alphavelocity/moneyclip/actions/workflows/test-windows.yaml/badge.svg)](https://github.com/alphavelocity/moneyclip/actions/workflows/test-windows.yaml?query=branch%3Amain)
+[![Test MacOS](https://github.com/alphavelocity/moneyclip/actions/workflows/test-macos.yaml/badge.svg)](https://github.com/alphavelocity/moneyclip/actions/workflows/test-macos.yaml?query=branch%3Amain)
+[![Lints](https://github.com/alphavelocity/moneyclip/actions/workflows/lints.yaml/badge.svg)](https://github.com/alphavelocity/moneyclip/actions/workflows/lints.yaml?query=branch%3Amain)
 [![License](https://img.shields.io/badge/License-Apache%202.0-3c60b1.svg?logo=opensourceinitiative&logoColor=white)](./LICENSE)
 
 </div>

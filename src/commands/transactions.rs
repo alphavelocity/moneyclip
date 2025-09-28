@@ -22,33 +22,43 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
 }
 
 fn add(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
-    let date = parse_date(sub.get_one::<String>("date").unwrap())?;
-    let account_name = sub.get_one::<String>("account").unwrap();
-    let amount = parse_decimal(sub.get_one::<String>("amount").unwrap())?;
-    let payee = sub.get_one::<String>("payee").unwrap();
-    let category = sub.get_one::<String>("category").map(|s| s.to_string());
-    let note = sub.get_one::<String>("note").map(|s| s.to_string());
+    let date_raw = sub.get_one::<String>("date").unwrap();
+    let date = parse_date(date_raw.trim())?;
+    let account_name = sub.get_one::<String>("account").unwrap().trim().to_string();
+    let amount_raw = sub.get_one::<String>("amount").unwrap();
+    let amount = parse_decimal(amount_raw.trim())?;
+    let mut payee = sub
+        .get_one::<String>("payee")
+        .map(|s| s.trim().to_string())
+        .unwrap();
+    let category = sub
+        .get_one::<String>("category")
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
+    let note = sub
+        .get_one::<String>("note")
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
 
-    let account_id = id_for_account(conn, account_name)?;
+    let account_id = id_for_account(conn, &account_name)?;
     let currency: String = conn.query_row(
         "SELECT currency FROM accounts WHERE id=?1",
         params![account_id],
         |r| r.get(0),
     )?;
-    let mut category_id = if let Some(cat) = category {
-        Some(id_for_category(conn, &cat)?)
+    let mut category_id = if let Some(cat) = category.as_deref() {
+        Some(id_for_category(conn, cat)?)
     } else {
         None
     };
 
+    let (rule_cat, rewrite) = apply_import_rules(conn, &payee, note.as_deref())?;
     if category_id.is_none() {
-        let (rule_cat, rewrite) = apply_import_rules(conn, payee, None)?;
-        if category_id.is_none() {
-            category_id = rule_cat;
-        }
-        if let Some(newp) = rewrite {
-            println!("Payee rewritten: {} -> {}", payee, newp);
-        }
+        category_id = rule_cat;
+    }
+    if let Some(newp) = rewrite.filter(|newp| newp != &payee) {
+        println!("Payee rewritten: {} -> {}", payee, newp);
+        payee = newp;
     }
 
     conn.execute(
@@ -58,7 +68,7 @@ fn add(conn: &Connection, sub: &clap::ArgMatches) -> Result<()> {
             date.to_string(),
             account_id,
             amount.to_string(),
-            payee,
+            &payee,
             category_id,
             currency,
             note
@@ -120,17 +130,26 @@ pub fn query_rows(conn: &Connection, sub: &clap::ArgMatches) -> Result<Vec<Trans
     );
     let mut params_vec: Vec<String> = Vec::new();
 
-    if let Some(month) = sub.get_one::<String>("month") {
-        sql.push_str(" AND substr(t.date,1,7)=?");
-        params_vec.push(month.into());
+    if let Some(month_raw) = sub.get_one::<String>("month") {
+        let month = month_raw.trim();
+        if !month.is_empty() {
+            sql.push_str(" AND substr(t.date,1,7)=?");
+            params_vec.push(month.to_string());
+        }
     }
-    if let Some(acct) = sub.get_one::<String>("account") {
-        sql.push_str(" AND a.name=?");
-        params_vec.push(acct.into());
+    if let Some(acct_raw) = sub.get_one::<String>("account") {
+        let acct = acct_raw.trim();
+        if !acct.is_empty() {
+            sql.push_str(" AND a.name=?");
+            params_vec.push(acct.to_string());
+        }
     }
-    if let Some(cat) = sub.get_one::<String>("category") {
-        sql.push_str(" AND c.name=?");
-        params_vec.push(cat.into());
+    if let Some(cat_raw) = sub.get_one::<String>("category") {
+        let cat = cat_raw.trim();
+        if !cat.is_empty() {
+            sql.push_str(" AND c.name=?");
+            params_vec.push(cat.to_string());
+        }
     }
     sql.push_str(" ORDER BY t.date DESC, t.id DESC");
     if let Some(limit) = sub.get_one::<usize>("limit") {

@@ -4,20 +4,31 @@
 // This source code is licensed under the license found in the
 // LICENSE file in the root directory of this source tree.
 
-use crate::utils::{id_for_category, pretty_table};
-use anyhow::Result;
+use crate::utils::{id_for_category, invalidate_rule_cache, pretty_table};
+use anyhow::{Result, anyhow};
+use regex::Regex;
 use rusqlite::{Connection, params};
 
 pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
     match m.subcommand() {
         Some(("add", sub)) => {
-            let pattern = sub.get_one::<String>("pattern").unwrap();
-            let cat = sub.get_one::<String>("category").map(|s| s.to_string());
+            let pattern_raw = sub.get_one::<String>("pattern").unwrap();
+            let pattern = pattern_raw.trim();
+            Regex::new(pattern)
+                .map_err(|err| anyhow!("Invalid regex pattern '{}': {}", pattern, err))?;
+
+            let cat = sub
+                .get_one::<String>("category")
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
+                .map(|s| s.to_string());
             let rewrite = sub
                 .get_one::<String>("payee_rewrite")
+                .map(|s| s.trim())
+                .filter(|s| !s.is_empty())
                 .map(|s| s.to_string());
-            let cat_id = if let Some(c) = cat {
-                Some(id_for_category(conn, &c)?)
+            let cat_id = if let Some(ref c) = cat {
+                Some(id_for_category(conn, c)?)
             } else {
                 None
             };
@@ -25,6 +36,7 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
                 "INSERT INTO rules(pattern, category_id, payee_rewrite) VALUES (?1,?2,?3)",
                 params![pattern, cat_id, rewrite],
             )?;
+            invalidate_rule_cache(conn);
             println!(
                 "Added rule: /{}/ -> category {:?}, rewrite {:?}",
                 pattern, cat_id, rewrite
@@ -51,8 +63,10 @@ pub fn handle(conn: &Connection, m: &clap::ArgMatches) -> Result<()> {
             );
         }
         Some(("rm", sub)) => {
-            let id = sub.get_one::<String>("id").unwrap().parse::<i64>()?;
+            let raw = sub.get_one::<String>("id").unwrap();
+            let id = raw.trim().parse::<i64>()?;
             conn.execute("DELETE FROM rules WHERE id=?1", params![id])?;
+            invalidate_rule_cache(conn);
             println!("Removed rule {}", id);
         }
         _ => {}

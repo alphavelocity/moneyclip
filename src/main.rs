@@ -6,17 +6,13 @@
 
 use anyhow::Result;
 
-mod cli;
-mod commands;
-mod db;
-mod models;
-mod utils;
+use moneyclip::{cli, commands, db};
 
 fn main() -> Result<()> {
     let cli = cli::build_cli();
     let matches = cli.get_matches();
 
-    let conn = db::open_or_init()?;
+    let mut conn = db::open_or_init()?;
 
     match matches.subcommand() {
         Some(("init", _)) => {
@@ -27,10 +23,10 @@ fn main() -> Result<()> {
         Some(("tx", sub)) => commands::transactions::handle(&conn, sub)?,
         Some(("budget", sub)) => commands::budgets::handle(&conn, sub)?,
         Some(("report", sub)) => commands::reports::handle(&conn, sub)?,
-        Some(("portfolio", sub)) => commands::portfolio::handle(&conn, sub)?,
-        Some(("import", sub)) => commands::importer::handle(&conn, sub)?,
+        Some(("portfolio", sub)) => commands::portfolio::handle(&mut conn, sub)?,
+        Some(("import", sub)) => commands::importer::handle(&mut conn, sub)?,
         Some(("export", sub)) => commands::exporter::handle(&conn, sub)?,
-        Some(("fx", sub)) => commands::fx::handle(&conn, sub)?,
+        Some(("fx", sub)) => commands::fx::handle(&mut conn, sub)?,
         Some(("doctor", _)) => commands::doctor::handle(&conn)?,
         Some(("envelope", sub)) => commands::envelopes::handle(&conn, sub)?,
         Some(("rules", sub)) => commands::rules::handle(&conn, sub)?,
